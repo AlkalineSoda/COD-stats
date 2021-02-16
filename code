@@ -1,0 +1,42 @@
+require('dotenv').config();
+const API = require('call-of-duty-api')();
+ 
+module.exports = {
+    name: 'codstats',
+    aliases: ['cs', 'cod'],
+    permissions: ['SEND_MESSAGES', 'VIEW_CHANNEL'],
+    description: 'this command shows Call of Duty stats',
+    async execute(message, args, cmd, client, Discord){
+        if(!args[0]) return message.channel.send('Please enter a username');
+        if(!args[1]) return message.channel.send('Please enter a platfrom');
+ 
+        let username = process.env.COD_USERNAME;
+        let password = process.env.COD_PASSWORD;
+ 
+        try{
+            await API.login(username, password);
+            let data = await API.CWmp(args[0], args[1]);
+            
+            const embed = new Discord.MessageEmbed()
+            .setColor('RED')
+            .setTitle('Cold War Multiplayer Stats')
+            .setDescription('Cold War stats')
+            .addFields(
+                { name: 'Games Played', value: data.lifetime.all.properties.totalGamesPlayed, inline: true},
+                { name: 'Wins', value: data.lifetime.all.properties.wins, inline: true},
+                { name: 'Losses', value: data.lifetime.all.properties.losses, inline: true},
+                { name: 'KD Ratio', value: data.lifetime.all.properties.kdratio, inline: true},
+                { name: 'Kills', value: data.lifetime.all.properties.kills, inline: true},
+                { name: 'Deaths', value: data.lifetime.all.properties.deaths, inline: true},
+                { name: 'Longest Kill Streak', value: data.lifetime.all.properties.longestKillstreak},
+                { name: 'Total Time Played', value: (parseFloat(data.lifetime.all.properties.timePlayedTotal / 3600).toFixed(2)) + " Hours"}
+            )
+ 
+            message.channel.send(embed);
+ 
+        } catch(error) {
+            message.channel.send('Error fetching player');
+            throw error;
+        }
+    }
+}
